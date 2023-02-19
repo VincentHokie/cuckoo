@@ -750,21 +750,6 @@ class AnalysisManager(threading.Thread):
             }
         )
 
-        try:
-            log.debug("Uploading zipped analysis file to AWS")
-            analysis_path = cwd("storage", "analyses", "%s" % task["id"])
-            shutil.make_archive(analysis_path, 'zip', analysis_path)
-            
-            s3_client = boto3.client('s3')            
-            thjson = json.load(open(analysis_path + "/task.json"))
-            parsed = parse(thjson['started_on']['$dt'])
-            filename = thjson['target'].split("/")[-1] + "/" + thjson['platform'] + "/" + thjson['machine'][3:-4] + "/" + thjson['machine'][5:-1] + "/" + str(parsed.year) + "/" + str(parsed.month) + "/" + str(parsed.day) + "/" + thjson['completed_on']['$dt']
-            s3_client.upload_file(analysis_path + '.zip', 'final-project-cuckoo-analyses', filename)
-            log.debug("Finished uploading zipped analysis file to AWS")
-
-        except ClientError as e:
-            log.exception("Failed to upload sample analysis results to AWS: ", e)
-
         return True
 
     def run(self):
@@ -816,6 +801,21 @@ class AnalysisManager(threading.Thread):
                     "status": "success",
                 }
             )
+
+            try:
+                log.debug("Uploading zipped analysis file to AWS")
+                analysis_path = cwd("storage", "analyses", "%s" % self.task.id)
+                shutil.make_archive(analysis_path, 'zip', analysis_path)
+                
+                s3_client = boto3.client('s3')            
+                thjson = json.load(open(analysis_path + "/task.json"))
+                parsed = parse(thjson['started_on']['$dt'])
+                filename = thjson['target'].split("/")[-1] + "/" + thjson['platform'] + "/" + thjson['machine'][3:-4] + "/" + thjson['machine'][5:-1] + "/" + str(parsed.year) + "/" + str(parsed.month) + "/" + str(parsed.day) + "/" + thjson['completed_on']['$dt']
+                s3_client.upload_file(analysis_path + '.zip', 'final-project-cuckoo-analyses', filename)
+                log.debug("Finished uploading zipped analysis file to AWS")
+
+            except ClientError as e:
+                log.exception("Failed to upload sample analysis results to AWS: ", e)
         except:
             log.exception("Failure in AnalysisManager.run", extra={
                 "action": "task.stop",
