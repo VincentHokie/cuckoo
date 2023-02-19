@@ -15,11 +15,6 @@ import subprocess
 import sys
 import tarfile
 import time
-import boto3
-import shutil
-import json
-from dateutil.parser import parse
-from botocore.exceptions import ClientError
 
 from cuckoo.common.colors import bold, red, yellow
 from cuckoo.common.config import config, emit_options, Config
@@ -276,19 +271,6 @@ def process_task(task):
             "action": "task.report", "status": "success",
         })
 
-        log.debug("Uploading zipped analysis file to AWS")
-        analysis_path = cwd("storage", "analyses", "%s" % task["id"])
-        shutil.make_archive(analysis_path, 'zip', analysis_path)
-        
-        s3_client = boto3.client('s3')            
-        thjson = json.load(open(analysis_path + "/task.json"))
-        parsed = parse(thjson['started_on']['$dt'])
-        filename = thjson['target'].split("/")[-1] + "/" + thjson['platform'] + "/" + thjson['machine'][3:-4] + "/" + thjson['machine'][5:-1] + "/" + str(parsed.year) + "/" + str(parsed.month) + "/" + str(parsed.day) + "/" + thjson['completed_on']['$dt']
-        s3_client.upload_file(analysis_path + '.zip', 'final-project-cuckoo-analyses', filename)
-        log.debug("Finished uploading zipped analysis file to AWS")
-
-    except ClientError as e:
-        log.exception("Failed to upload sample analysis results to AWS: ", e)
     except Exception as e:
         log.exception("Caught unknown exception: %s", e)
     finally:
