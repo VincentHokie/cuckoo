@@ -10,6 +10,11 @@ import logging
 import os
 import pkgutil
 import sys
+import boto3
+import shutil
+import json
+from dateutil.parser import parse
+from botocore.exceptions import ClientError
 
 import cuckoo
 
@@ -658,6 +663,20 @@ class RunReporting(object):
         try:
             current.run(self.results)
             log.debug("Executed reporting module \"%s\"", current.__class__.__name__)
+
+            log.debug("Uploading zipped analysis file to AWS")
+            shutil.make_archive(self.analysis_path, 'zip', self.analysis_path)
+            
+            s3_client = boto3.client('s3')            
+            thjson = json.load(open(self.analysis_path + "/task.json"))
+            parsed = parse(thjson['started_on']['$dt'])
+            filename = thjson['target'].split("/")[-1] + "/" + thjson['platform'] + "/" + thjson['machine'][3:-4] + "/" + thjson['machine'][5:-1] + "/" + str(parsed.year) + "/" + str(parsed.month) + "/" + str(parsed.day) + "/" + thjson['completed_on']['$dt']
+            s3_client.upload_file(self.analysis_path + '.zip', 'final-project-cuckoo-analyses', filename)
+            log.debug("Finished uploading zipped analysis file to AWS")
+
+        except ClientError as e:
+            log.exception("Failed to upload sample analysis results to AWS: ", e)
+            
         except CuckooDependencyError as e:
             log.warning(
                 "The reporting module \"%s\" has missing dependencies: %s",
