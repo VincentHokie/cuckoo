@@ -807,7 +807,7 @@ class AnalysisManager(threading.Thread):
                 analysis_path = cwd("storage", "analyses", "%s" % self.task.id)
                 shutil.make_archive(analysis_path, 'zip', analysis_path)
                 
-                s3_client = boto3.client('s3')            
+                s3_client = boto3.client('s3')
                 thjson = json.load(open(analysis_path + "/task.json"))
                 parsed = parse(thjson['started_on']['$dt'])
                 filename = thjson['target'].split("/")[-1] + "/" + thjson['platform'] + "/" + thjson['machine'][3:-4] + "/" + thjson['machine'][5:-1] + "/" + str(parsed.year) + "/" + str(parsed.month) + "/" + str(parsed.day) + "/" + thjson['completed_on']['$dt']
