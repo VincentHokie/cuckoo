@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{% block content %}
+
+<div class="row">
+    <div class="col-md-6 col-md-offset-3 center">
+        <form role="form" action="" method="post" enctype="multipart/form-data">{% csrf_token %}
+            <div class="tabbable">
+                <div class="tab-content">
+                    <div class="tab-pane fade in active" id="file">
+
+                        <label for="fname">Virtual Machine Name (this is what will show up as a VM in Cuckoo):</label>
+                        <input type="text" id="vnname" name="vmname" required>
+                        
+                        <br><br>
+
+                        <label style="display: flex;">Choose one or more virtual machines from AWS to import (only .zip
+                            is supported)</label>
+                        <select name="vmfile" required>
+                            {% for vm in available_vms %}
+                                <option value="{{ vm }}">{{ vm }}</option>
+                            {% endfor %}
+
+                        </select>
+
+                        <br><br>
+
+                        <label style="display: flex;">Operating System</label>
+                        <select disabled name="os" required>
+                            <option value="windows"> Windows</option>
+                        </select>
+
+                        <br><br>
+
+                        <label style="display: flex;">Operating System Version</label>
+                        <select name="osversion" required>
+                            <option value="7"> 7</option>
+                            <option value="81"> 8.1</option>
+                            <option value="10"> 10</option>
+                        </select>
+
+                        <br><br>
+
+                        <label style="display: flex;">Operating System Architecture</label>
+                        <select name="osarch" required>
+                            <option value="32">x32</option>
+                            <option value="64">x64</option>
+                        </select>
+
+                        <br><br>
+
+                        <label style="display: flex;">CPU Count</label>
+                        <input type="number" min="2" max="5" id="cpu" name="cpu" required>
+
+                        <br><br>
+
+                        <label style="display: flex;">RAM Size (in GB)</label>
+                        <input type="number" min="2" max="5" id="ram" name="ram" required>
+
+                    </div>
+                </div>
+            </div>
+            <div style="margin: 20px;"><button type="submit" class="btn btn-primary btn-lg">Import Virtual Machine</button></div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

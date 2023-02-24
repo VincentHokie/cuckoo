@@ -16,14 +16,20 @@
 	<ul class="app-nav__nav--right">
 		<li>
 			<a href="{% url "submission/index" %}" class="button outline">
-				<span data-responsive="nav-expanded">Submit</span>
+				<span data-responsive="nav-expanded">Submit Sample</span>
 				<span data-responsive="nav-collapsed"><i class="fa fa-upload"></i></span>
 			</a>
 		</li>
 		<li>
 			<a href="{% url "analysis/import" %}" class="button outline">
-				<span data-responsive="nav-expanded">Import</span>
+				<span data-responsive="nav-expanded">Import Samples</span>
 				<span data-responsive="nav-collapsed"><i class="fa fa-download"></i></span>
+			</a>
+		</li>
+		<li>
+			<a href="{% url "vm/import" %}" class="button outline">
+				<span data-responsive="nav-expanded">Import VM</span>
+				<span data-responsive="nav-collapsed"><i class="fa fa-upload"></i></span>
 			</a>
 		</li>
 		<li class="app-nav__dropdown--parent">

@@ -25,7 +25,8 @@ urlpatterns = [
     url(r"^pcap/", include("controllers.pcap.urls")),
     url(r"^machines/", include("controllers.pcap.urls")),
     url(r"^cuckoo/", include("controllers.cuckoo.urls")),
-    url(r"^secret/", misc.views.secret)
+    url(r"^secret/", misc.views.secret),
+    url(r"^vm/", include("vm.urls")),
 ]
 
 handler404 = web.errors.handler404
