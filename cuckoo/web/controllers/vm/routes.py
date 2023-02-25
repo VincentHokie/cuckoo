@@ -80,11 +80,22 @@ class VirtualMachineRoutes(object):
         newvdiname = zip_vdi_location + "custom-" + filename
         shutil.move(vdi_file, newvdiname)
 
-        vmcloack = VMCloak()
-        vmcloack.init(os=os, os_version=osversion, arch=osarch, custom_name=vmname, cpu_count=cpu, ram_size=ram * 1024, vdi_file=newvdiname)
-        vmcloack.clone(custom_name=vmname)
-        vmcloack.install(custom_name=vmname)
-        vmcloack.snapshot(custom_name=vmname)
+        try:
+            import subprocess
+            cmd = ["/home/ubuntu/vmcloak.sh", "-ram", int(ram) * 1024, "-osarch", osarch, "-osversion", osversion, "-vmname", vmname, "-cpu", cpu, "-vdi", newvdiname]
+            log.debug("Running command: %s", cmd)
+            ret = subprocess.check_output(cmd, shell=True)
+        except Exception as e:
+            log.error("[-] Error running command: %s", e)
+            raise Exception
+
+        # Ideally, the above script should be a series of steps that can be tracked
+        #
+        # vmcloack = VMCloak()
+        # vmcloack.init(os=os, os_version=osversion, arch=osarch, custom_name=vmname, cpu_count=cpu, ram_size=int(ram) * 1024, vdi_file=newvdiname)
+        # vmcloack.clone(custom_name=vmname)
+        # vmcloack.install(custom_name=vmname)
+        # vmcloack.snapshot(custom_name=vmname)
 
         Database().connect()
         cuckoo_machine(
