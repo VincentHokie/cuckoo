@@ -29,7 +29,7 @@ class VirtualMachineRoutes(object):
 
     @staticmethod
     def import_(request):
-        boto3.setup_default_session(profile_name='personal')
+        # boto3.setup_default_session(profile_name='personal')
         vms_bucket = "final-project-cuckoo-vms"
         s3_client = boto3.client("s3")
 
@@ -46,37 +46,42 @@ class VirtualMachineRoutes(object):
 
         init_console_logging(level=logging.DEBUG)
 
-        ram = request.POST.ram
-        os = request.POST.os
-        osarch = request.POST.osarch
-        osversion = request.POST.osversion
-        vmname = request.POST.vmname
-        cpu = request.POST.cpu
-        vmfile = request.POST.vmfile
+        ram = request.POST['ram']
+        os = request.POST['os']
+        osarch = request.POST['osarch']
+        osversion = request.POST['osversion']
+        vmname = request.POST['vmname']
+        cpu = request.POST['cpu']
+        vmfile = request.POST['vmfile']
+
+        zip_vdi_location = "/tmp/"
+        unzip_vdi_location = zip_vdi_location + vmname
 
         log.debug("Triggering zip file downlaod..")
-        s3_client.download_file(vmfile, "/" + vmfile)
+        s3_client.download_file(vms_bucket, vmfile, zip_vdi_location + vmfile)
         log.debug("Completed zip file downlaod..")
 
         log.debug("Unzipping zip file..")
-        with zipfile.ZipFile("./" + vmfile, 'r') as zip_ref:
-            zip_ref.extractall(".")
+        with zipfile.ZipFile(zip_vdi_location + vmfile, 'r') as zip_ref:
+            zip_ref.extractall(unzip_vdi_location)
         log.debug("Completed unzipping zip file..")
 
         import os
+        from glob import glob
         import shutil
-        vdi_files = [f for f in os.listdir(".") if f.endswith('.vdi')]
+        vdi_files = [y for x in os.walk(unzip_vdi_location) for y in glob(os.path.join(x[0], '*.vdi'))]
 
         if len(vdi_files) != 1:
              log.error("We must have one vdi file inside the zip file..")
              exit()
-        
+
         vdi_file = vdi_files[0]
-        newvdiname = "custom" + vdi_file
-        shutil.move("./" + vdi_file, "./" + newvdiname)
+        _, filename = os.path.split(vdi_file)
+        newvdiname = zip_vdi_location + "custom-" + filename
+        shutil.move(vdi_file, newvdiname)
 
         vmcloack = VMCloak()
-        vmcloack.init(os=os, os_version=osversion, arch=osarch, custom_name=vmname, cpu_count=cpu, ram_size=ram, vdi_file=os.path.abspath(newvdiname))
+        vmcloack.init(os=os, os_version=osversion, arch=osarch, custom_name=vmname, cpu_count=cpu, ram_size=ram * 1024, vdi_file=newvdiname)
         vmcloack.clone(custom_name=vmname)
         vmcloack.install(custom_name=vmname)
         vmcloack.snapshot(custom_name=vmname)
