@@ -97,10 +97,4 @@ class VirtualMachineRoutes(object):
         # vmcloack.install(custom_name=vmname)
         # vmcloack.snapshot(custom_name=vmname)
 
-        Database().connect()
-        cuckoo_machine(
-            vmname, "add", "192.168.56.100", os, None, None, None,
-            None, "192.168.56.1:2042"
-        )
-
         return redirect("vm/success")
