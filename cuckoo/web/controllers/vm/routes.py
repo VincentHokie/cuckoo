@@ -82,7 +82,7 @@ class VirtualMachineRoutes(object):
 
         try:
             import subprocess
-            cmd = ["/home/ubuntu/vmcloak.sh", int(ram) * 1024, osarch, osversion, vmname, cpu, newvdiname]
+            cmd = ["/home/ubuntu/vmcloak.sh", str(int(ram) * 1024), osarch, osversion, vmname, cpu, newvdiname]
             log.debug("Running command: %s", cmd)
             ret = subprocess.check_output(cmd, shell=True)
         except Exception as e:
