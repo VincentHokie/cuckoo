@@ -377,25 +377,24 @@ def submit(ctx, target, url, options, package, custom, owner, timeout,
     init_console_logging(level=ctx.parent.level)
     Database().connect()
 
-    for machine in machines.split(","):
-        try:
-            l = submit_tasks(
-                target, options, package, custom, owner, timeout, priority,
-                machine, platform, memory, enforce_timeout, clock, tags, remote,
-                pattern, max, unique, url, baseline, shuffle, api_token
-            )
+    try:
+        l = submit_tasks(
+            target, options, package, custom, owner, timeout, priority,
+            machines.split(","), platform, memory, enforce_timeout, clock, tags, remote,
+            pattern, max, unique, url, baseline, shuffle, api_token
+        )
 
-            for category, target, task_id in l:
-                if task_id:
-                    print "%s: %s \"%s\" added as task with ID #%s" % (
-                        bold(green("Success")), category, target, task_id
-                    )
-                else:
-                    print "%s: %s \"%s\" as it has already been analyzed" % (
-                        bold(yellow("Skipped")), category, target
-                    )
-        except KeyboardInterrupt:
-            print(red("Aborting submission of samples.."))
+        for category, target, task_id in l:
+            if task_id:
+                print "%s: %s \"%s\" added as task with ID #%s" % (
+                    bold(green("Success")), category, target, task_id
+                )
+            else:
+                print "%s: %s \"%s\" as it has already been analyzed" % (
+                    bold(yellow("Skipped")), category, target
+                )
+    except KeyboardInterrupt:
+        print(red("Aborting submission of samples.."))
 
 @main.command()
 @click.argument("instance", required=False)

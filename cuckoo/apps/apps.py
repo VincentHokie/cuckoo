@@ -115,7 +115,7 @@ def enumerate_files(path, pattern):
                         yield to_unicode(filepath)
 
 def submit_tasks(target, options, package, custom, owner, timeout, priority,
-                 machine, platform, memory, enforce_timeout, clock, tags,
+                 machines, platform, memory, enforce_timeout, clock, tags,
                  remote, pattern, maxcount, is_unique, is_url, is_baseline,
                  is_shuffle, api_token):
     db = Database()
@@ -125,7 +125,7 @@ def submit_tasks(target, options, package, custom, owner, timeout, priority,
         timeout=timeout,
         options=options,
         priority=priority,
-        machine=machine,
+        machine=machines[0],
         platform=platform,
         custom=custom,
         owner=owner,
@@ -141,8 +141,8 @@ def submit_tasks(target, options, package, custom, owner, timeout, priority,
             print "Remote baseline support has not yet been implemented."
             return
 
-        task_id = db.add_baseline(timeout, owner, machine, memory)
-        yield "Baseline", machine, task_id
+        task_id = db.add_baseline(timeout, owner, machine[0], memory)
+        yield "Baseline", machine[0], task_id
         return
 
     if is_url and is_unique:
@@ -203,20 +203,22 @@ def submit_tasks(target, options, package, custom, owner, timeout, priority,
                 "file": (os.path.basename(filepath), open(filepath, "rb")),
             }
 
-            try:
-                headers = {}
-                if api_token:
-                    headers["Authorization"] = "Bearer %s" % api_token
-                r = requests.post(
-                    "http://%s/tasks/create/file" % remote,
-                    headers=headers, data=data, files=files
-                )
-                yield "File", filepath, r.json()["task_id"]
-            except Exception as e:
-                print "%s: unable to submit file: %s" % (
-                    bold(red("Error")), e
-                )
-                continue
+            for machine in machines:
+                data['machine'] = machine
+                try:
+                    headers = {}
+                    if api_token:
+                        headers["Authorization"] = "Bearer %s" % api_token
+                    r = requests.post(
+                        "http://%s/tasks/create/file" % remote,
+                        headers=headers, data=data, files=files
+                    )
+                    yield "File", filepath, r.json()["task_id"]
+                except Exception as e:
+                    print "%s: unable to submit file: %s" % (
+                        bold(red("Error")), e
+                    )
+                    continue
 
 def process(target, copy_path, task):
     results = RunProcessing(task=task).run()
