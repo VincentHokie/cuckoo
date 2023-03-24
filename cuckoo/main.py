@@ -368,10 +368,11 @@ def clean():
 @click.option("--pattern", help="Provide a glob-pattern when submitting a directory")
 @click.option("--max", type=int, help="Submit up to X tasks at once")
 @click.option("--unique", is_flag=True, help="Only submit samples that have not been analyzed before")
+@click.option("--api-token", help="API Token to be added to the headers and used when submitting a sample to a remote Cuckoo deployment")
 @click.pass_context
 def submit(ctx, target, url, options, package, custom, owner, timeout,
            priority, machine, platform, memory, enforce_timeout, clock, tags,
-           baseline, remote, shuffle, pattern, max, unique):
+           baseline, remote, shuffle, pattern, max, unique, api_token):
     """Submit one or more files or URLs to Cuckoo."""
     init_console_logging(level=ctx.parent.level)
     Database().connect()
@@ -380,7 +381,7 @@ def submit(ctx, target, url, options, package, custom, owner, timeout,
         l = submit_tasks(
             target, options, package, custom, owner, timeout, priority,
             machine, platform, memory, enforce_timeout, clock, tags, remote,
-            pattern, max, unique, url, baseline, shuffle
+            pattern, max, unique, url, baseline, shuffle, api_token
         )
 
         for category, target, task_id in l:

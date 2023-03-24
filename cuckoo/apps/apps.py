@@ -117,7 +117,7 @@ def enumerate_files(path, pattern):
 def submit_tasks(target, options, package, custom, owner, timeout, priority,
                  machine, platform, memory, enforce_timeout, clock, tags,
                  remote, pattern, maxcount, is_unique, is_url, is_baseline,
-                 is_shuffle):
+                 is_shuffle, api_token):
     db = Database()
 
     data = dict(
@@ -204,9 +204,12 @@ def submit_tasks(target, options, package, custom, owner, timeout, priority,
             }
 
             try:
+                headers = {}
+                if api_token:
+                    headers["Authorization"] = "Bearer %s" % api_token
                 r = requests.post(
                     "http://%s/tasks/create/file" % remote,
-                    data=data, files=files
+                    headers=headers, data=data, files=files
                 )
                 yield "File", filepath, r.json()["task_id"]
             except Exception as e:
