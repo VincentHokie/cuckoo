@@ -45,3 +45,11 @@ You can find the full documentation of the latest stable release
 
 .. _`community guidelines`: https://cuckoo.sh/docs/introduction/community.html
 .. _`contribution requirements`: http://www.cuckoofoundation.org/contribute.html
+
+
+Differences with main
+
+This fork of the Cuckoo Sandbox project includes
+- Allow submission of samples to multiple VMs through the API and the UI
+- Add route and UI to allow VM import
+- Allow uploads of ZIPped analyses to a data store
