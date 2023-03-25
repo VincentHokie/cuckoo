@@ -1449,6 +1449,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 var TEMPLATES = {
 	TopSelect: HANDLEBARS_TEMPLATES['control-top-select'],
 	SimpleSelect: HANDLEBARS_TEMPLATES['control-simple-select'],
+	MultipleSelect: HANDLEBARS_TEMPLATES['control-multiple-select'],
 	ToggleList: HANDLEBARS_TEMPLATES['control-toggle-list']
 
 	// renders two interface controllers onto one row
@@ -1702,6 +1703,62 @@ var SimpleSelect = function (_UserInputController) {
 	}]);
 
 	return SimpleSelect;
+}(UserInputController);
+
+// MULTIPLESELECT CONSTRUCTOR (EXTENDS USERINPUTCONTROLLER)
+
+
+var MultipleSelect = function (_UserInputController) {
+	_inherits(MultipleSelect, _UserInputController);
+
+	function MultipleSelect(config) {
+		_classCallCheck(this, MultipleSelect);
+
+		var _this = _possibleConstructorReturn(this, (MultipleSelect.__proto__ || Object.getPrototypeOf(SimpleSelect)).call(this, config));
+
+		_this.options = config.options;
+
+		_this.initialise();
+		return _this;
+	}
+
+	_createClass(MultipleSelect, [{
+		key: 'initialise',
+		value: function initialise() {
+
+			var self = this;
+			this.view.template = TEMPLATES.MultipleSelect;
+
+			this.view.setupModel({
+				options: this.options,
+				doc_link: this.config.doc_link
+			});
+
+			if (this.default) {
+				this.options.forEach(function (opt) {
+					if (opt.value == self.default) {
+						opt.selected = true;
+						self.setValue(self.default);
+					}
+				});
+			}
+
+			this.view.afterRender(function (controller) {
+				$(this).find('select').bind('change', function () {
+					var optValues = [];
+					for(var index = 0; index < this.options.length; index++) {
+						var opt = this.options[index];
+						if (opt.selected == true) {
+							optValues.push(opt.value);
+						}
+					}
+					controller.setValue(optValues);
+				});
+			});
+		}
+	}]);
+
+	return MultipleSelect;
 }(UserInputController);
 
 // TOPSELECT CONSTRUCTOR (EXTENDS USERINPUTCONTROLLER)
@@ -2097,6 +2154,7 @@ var Form = function () {
 		this.config.configure.call({
 			TopSelect: TopSelect,
 			SimpleSelect: SimpleSelect,
+			MultipleSelect: MultipleSelect,
 			Split: Split,
 			ToggleList: ToggleList
 		}, this);
@@ -2205,6 +2263,7 @@ var Form = function () {
 	return Form;
 }();
 
+exports.MultipleSelect = MultipleSelect;
 exports.SimpleSelect = SimpleSelect;
 exports.TopSelect = TopSelect;
 exports.Split = Split;
