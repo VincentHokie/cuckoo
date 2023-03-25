@@ -2796,9 +2796,9 @@ $(function () {
 										}
 									});
 
-									var machine = new this.SimpleSelect({
+									var machine = new this.MultipleSelect({
 										name: 'machine-' + item.filetree.index,
-										title: 'Machine',
+										title: 'Machines',
 										default: item.per_file_options['machine'],
 										options: default_analysis_options.available_machines
 									}).on('change', function (value) {
@@ -2873,9 +2873,9 @@ $(function () {
 						options: submission_options
 					});
 
-					var machine = new this.SimpleSelect({
+					var machine = new this.MultipleSelect({
 						name: 'machine',
-						title: 'Machine',
+						title: 'Machines',
 						default: default_analysis_options['machine'],
 						options: default_analysis_options['available_machines']
 					});
