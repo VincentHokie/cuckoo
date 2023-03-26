@@ -1,21 +1,22 @@
+import os
+import boto3
+import shutil
+import zipfile
 import logging
-import os.path
+from glob import glob
+import calendar
+import time
 
 from django.shortcuts import redirect
 
 from cuckoo.core.database import Database
-from cuckoo.core.submit import SubmitManager
 from cuckoo.web.utils import view_error, render_template
 
-from cuckoo.apps import cuckoo_machine
 from cuckoo.web.controllers.vm.vmcloak_api import VMCloak
 from cuckoo.core.startup import init_console_logging
 
-import boto3
-import zipfile
-
 log = logging.getLogger(__name__)
-submit_manager = SubmitManager()
+db = Database()
 
 class VirtualMachineRoutes(object):
 
@@ -54,31 +55,42 @@ class VirtualMachineRoutes(object):
         cpu = request.POST['cpu']
         vmfile = request.POST['vmfile']
 
+        current_GMT = time.gmtime()
+        timestamp = calendar.timegm(current_GMT)
+
+        vm_import_id = db.add_vm_import(
+            vm_name = vmname, vm_file = vmfile, os = os,
+            os_version = osversion, os_arch = osarch, cpu = cpu,
+            ram = ram, file_log = vmfile + '-' + os + '-' + osarch + '-' + timestamp
+        )
+
         zip_vdi_location = "/tmp/"
         unzip_vdi_location = zip_vdi_location + vmname
 
         log.debug("Triggering zip file downlaod..")
+        db.update_vm_import_status(vm_import_id, "ZIP File Downloading...")
         s3_client.download_file(vms_bucket, vmfile, zip_vdi_location + vmfile)
         log.debug("Completed zip file downlaod..")
 
         log.debug("Unzipping zip file..")
+        db.update_vm_import_status(vm_import_id, "ZIP File Extraction...")
         with zipfile.ZipFile(zip_vdi_location + vmfile, 'r') as zip_ref:
             zip_ref.extractall(unzip_vdi_location)
         log.debug("Completed unzipping zip file..")
 
-        import os
-        from glob import glob
-        import shutil
         vdi_files = [y for x in os.walk(unzip_vdi_location) for y in glob(os.path.join(x[0], '*.vdi'))]
 
         if len(vdi_files) != 1:
-             log.error("We must have one vdi file inside the zip file..")
-             exit()
+            db.update_vm_import_status(vm_import_id, "No VDI File Found...")
+            log.error("We must have one vdi file inside the zip file..")
+            exit()
 
         vdi_file = vdi_files[0]
         _, filename = os.path.split(vdi_file)
         newvdiname = zip_vdi_location + "custom-" + filename
         shutil.move(vdi_file, newvdiname)
+
+        db.update_vm_import_status(vm_import_id, "Importing VM...")
 
         try:
             import subprocess
