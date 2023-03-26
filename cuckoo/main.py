@@ -28,7 +28,6 @@ from cuckoo.core.database import Database
 from cuckoo.core.init import write_supervisor_conf, write_cuckoo_conf
 from cuckoo.core.resultserver import ResultServer
 from cuckoo.core.scheduler import Scheduler
-from cuckoo.web.controllers.vm.vm_import_manager import VMImportScheduler
 from cuckoo.core.startup import (
     check_configs, init_modules, check_version, init_logfile, init_logging,
     init_console_logging, init_tasks, init_yara, init_binaries, init_rooter,
@@ -242,8 +241,6 @@ def cuckoo_main(max_analysis_count=0):
         rs = ResultServer()
         sched = Scheduler(max_analysis_count)
         sched.start()
-        import_sched = VMImportScheduler()
-        import_sched.start()
     except KeyboardInterrupt:
         log.info("CTRL+C detected! Stopping.. This can take a few seconds")
     finally:

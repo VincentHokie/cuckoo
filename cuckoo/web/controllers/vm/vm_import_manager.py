@@ -7,9 +7,7 @@ from glob import glob
 import calendar
 import time
 import threading
-import Queue
 
-from cuckoo.core.database import Database
 from cuckoo.core.log import task_log_start, task_log_stop
 
 log = logging.getLogger(__name__)
@@ -97,88 +95,3 @@ class VMImportManager(threading.Thread):
             log.error("[-] Error importing a VM: %s", e)
         finally:
             task_log_stop(self.timestamp)
-
-
-class VMImportScheduler(object):
-    """Tasks Scheduler.
-
-    This class is responsible for the main execution loop of the import tool. It
-    keeps waiting and loading for new import tasks as they come in.
-    Whenever a new import task is available, it launches VMImportManager which will
-    take care of running the full import process.
-    """
-    def __init__(self, maxcount=None):
-        self.running = True
-        self.db = Database()
-        self.maxcount = maxcount
-        self.import_managers = set()
-
-    def stop(self):
-        """Stop scheduler."""
-        self.running = False
-
-        # Force stop all analysis managers.
-        for am in self.import_managers:
-            try:
-                am.force_stop()
-            except Exception as e:
-                log.exception("Error force stopping import manager: %s", e)
-
-        # Remove network rules if any are present and stop auxiliary modules
-        for am in self.import_managers:
-            try:
-                am.cleanup()
-            except Exception as e:
-                log.exception(
-                    "Error while cleaning up import manager: %s", e
-                )
-
-    def _cleanup_managers(self):
-        cleaned = set()
-        for am in self.import_managers:
-            if not am.isAlive():
-                try:
-                    am.cleanup()
-                except Exception as e:
-                    log.exception("Error in import manager cleanup: %s", e)
-
-                cleaned.add(am)
-        return cleaned
-
-    def start(self):
-        """Start scheduler."""
-
-        log.info("Waiting for import tasks.")
-
-        # Message queue with threads to transmit exceptions (used as IPC).
-        errors = Queue.Queue()
-
-        vms_bucket = "final-project-cuckoo-vms"
-        s3_client = boto3.client("s3")
-
-        # This loop runs forever.
-        while self.running:
-            time.sleep(1)
-
-            # Run cleanup on finished import managers and untrack them
-            for am in self._cleanup_managers():
-                self.import_managers.discard(am)
-            
-            import_task = self.db.get_import_task_to_process()
-
-            if import_task:
-                log.debug("Processing import task #%s", import_task.id)
-
-                # Initialize and start the import manager.
-                import_manager = VMImportManager(s3_client, vms_bucket, self.db, import_task)
-                import_manager.daemon = True
-                import_manager.start()
-                self.import_managers.add(import_manager)
-
-            # Deal with errors.
-            try:
-                raise errors.get(block=False)
-            except Queue.Empty:
-                pass
-
-        log.debug("End of import analyses.")
