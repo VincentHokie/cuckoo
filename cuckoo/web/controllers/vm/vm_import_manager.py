@@ -78,7 +78,7 @@ class VMImportManager(threading.Thread):
             self.db.update_vm_import_status(self.import_task.id, "Importing VM...")
 
             import subprocess
-            cmd = ["/home/ubuntu/vmcloak.sh", str(int(ram) * 1024), osarch, osversion, vmname, cpu, newvdiname]
+            cmd = ["/home/ubuntu/vmcloak.sh", str(int(ram) * 1024), str(osarch), str(osversion), str(vmname), str(cpu), str(newvdiname)]
             log.debug("Running command: %s", cmd)
             ret = subprocess.check_output(cmd)
             self.db.update_vm_import_status(self.import_task.id, "VM Import Complete!")                        
