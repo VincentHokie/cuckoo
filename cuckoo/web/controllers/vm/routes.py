@@ -1,5 +1,7 @@
 import boto3
 import logging
+import calendar
+import time
 
 from django.shortcuts import redirect
 
@@ -41,8 +43,21 @@ class VirtualMachineRoutes(object):
 
         init_console_logging(level=logging.DEBUG)
 
-        import_manager = VMImportManager(s3_client, vms_bucket, db, request)
-        import_manager.daemon = True
-        import_manager.start()
+        ram = request.POST['ram']
+        os = request.POST['os']
+        osarch = request.POST['osarch']
+        osversion = request.POST['osversion']
+        vmname = request.POST['vmname']
+        cpu = request.POST['cpu']
+        vmfile = request.POST['vmfile']
+
+        current_GMT = time.gmtime()
+        timestamp = calendar.timegm(current_GMT)
+
+        db.add_vm_import(
+            vm_name = str(vmname), vm_file = str(vmfile), os = str(os),
+            os_version = str(osversion), os_arch = str(osarch), cpu = int(cpu),
+            ram = int(ram), file_log = "%s-%s-%s-%s" % (str(vmfile), str(os), str(osarch), str(timestamp))
+        )
 
         return redirect("vm/success")

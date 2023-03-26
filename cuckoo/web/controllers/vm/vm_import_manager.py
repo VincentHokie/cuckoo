@@ -51,22 +51,16 @@ class VMImportManager(threading.Thread):
             cpu = self.import_task.cpu
             vmfile = self.import_task.vm_file
 
-            vm_import_id = self.db.add_vm_import(
-                vm_name = str(vmname), vm_file = str(vmfile), os = str(os),
-                os_version = str(osversion), os_arch = str(osarch), cpu = int(cpu),
-                ram = int(ram), file_log = "%s-%s-%s-%s" % (str(vmfile), str(os), str(osarch), str(self.timestamp))
-            )
-
             zip_vdi_location = "/tmp/"
             unzip_vdi_location = zip_vdi_location + vmname
 
             log.debug("Triggering zip file downlaod..")
-            self.db.update_vm_import_status(vm_import_id, "ZIP File Downloading...")
+            self.db.update_vm_import_status(self.import_task.id, "ZIP File Downloading...")
             self.s3_client.download_file(self.vms_bucket, vmfile, zip_vdi_location + vmfile)
             log.debug("Completed zip file downlaod..")
 
             log.debug("Unzipping zip file..")
-            self.db.update_vm_import_status(vm_import_id, "ZIP File Extraction...")
+            self.db.update_vm_import_status(self.import_task.id, "ZIP File Extraction...")
             with zipfile.ZipFile(zip_vdi_location + vmfile, 'r') as zip_ref:
                 zip_ref.extractall(unzip_vdi_location)
             log.debug("Completed unzipping zip file..")
@@ -74,7 +68,7 @@ class VMImportManager(threading.Thread):
             vdi_files = [y for x in walk(unzip_vdi_location) for y in glob(os.path.join(x[0], '*.vdi'))]
 
             if len(vdi_files) != 1:
-                self.db.update_vm_import_status(vm_import_id, "No VDI File Found...")
+                self.db.update_vm_import_status(self.import_task.id, "No VDI File Found...")
                 log.error("We must have one vdi file inside the zip file..")
                 exit()
 
@@ -83,13 +77,13 @@ class VMImportManager(threading.Thread):
             newvdiname = zip_vdi_location + "custom-" + filename
             shutil.move(vdi_file, newvdiname)
 
-            self.db.update_vm_import_status(vm_import_id, "Importing VM...")
+            self.db.update_vm_import_status(self.import_task.id, "Importing VM...")
 
             import subprocess
             cmd = ["/home/ubuntu/vmcloak.sh", str(int(ram) * 1024), osarch, osversion, vmname, cpu, newvdiname]
             log.debug("Running command: %s", cmd)
             ret = subprocess.check_output(cmd)
-            self.db.update_vm_import_status(vm_import_id, "VM Import Complete!")                        
+            self.db.update_vm_import_status(self.import_task.id, "VM Import Complete!")                        
 
             log.debug("VM Import process complete!")
             # Ideally, the above script should be a series of steps that can be tracked
