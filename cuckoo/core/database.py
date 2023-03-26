@@ -1311,8 +1311,6 @@ class Database(object):
             session.rollback()
             log.exception("Exception was found: {0}".format(e))
             return None
-        finally:
-            session.close()
 
         return vm_import
 

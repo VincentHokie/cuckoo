@@ -81,7 +81,7 @@ class VMImportManager(threading.Thread):
             cmd = ["/home/ubuntu/vmcloak.sh", str(int(ram) * 1024), str(osarch), str(osversion), str(vmname), str(cpu), str(newvdiname)]
             log.debug("Running command: %s", cmd)
             ret = subprocess.check_output(cmd)
-            self.db.update_vm_import_status(self.import_task.id, "VM Import Complete!")                        
+            self.db.update_vm_import_status(self.import_task.id, "VM Import Complete!")
 
             log.debug("VM Import process complete!")
             # Ideally, the above script should be a series of steps that can be tracked
