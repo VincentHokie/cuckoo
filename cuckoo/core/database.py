@@ -1268,6 +1268,52 @@ class Database(object):
         finally:
             session.close()
 
+    @classlock
+    def get_import_task_to_process(self):
+
+        """Update the VM import task status to database.
+        @param id: object to add (File or URL).
+        @param status: selected timeout.
+        @return: cursor or None.
+        """
+        # TODO: parameter `package` is not mentioned in the function docstring
+        session = self.Session()
+
+        try:
+            vm_import = session.query(VMImport).filter_by(picked_up=False).first()
+        except SQLAlchemyError as e:
+            log.exception(
+                "Error querying VM Import task: {0}".format(e)
+            )
+            session.close()
+            return None
+        
+        if not vm_import:
+            return None
+
+        vm_import.picked_up = True
+        session.add(vm_import)
+
+        try:
+            session.commit()
+        except IntegrityError:
+            session.rollback()
+            log.exception(
+                "Error updating a VM Import record: {0}".format(e)
+            )
+            return None
+        except SQLAlchemyError as e:
+            log.exception("Database error adding task: {0}".format(e))
+            return None
+        except Exception:
+            session.rollback()
+            log.exception("Exception was found: {0}".format(e))
+            return None
+        finally:
+            session.close()
+
+        return vm_import
+
     def add_path(self, file_path, timeout=0, package="", options="",
                  priority=1, custom="", owner="", machine="", platform="",
                  tags=None, memory=False, enforce_timeout=False, clock=None,
