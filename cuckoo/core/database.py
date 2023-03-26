@@ -1296,6 +1296,7 @@ class Database(object):
 
         try:
             session.commit()
+            session.flush()
         except IntegrityError:
             session.rollback()
             log.exception(
@@ -1303,6 +1304,7 @@ class Database(object):
             )
             return None
         except SQLAlchemyError as e:
+            session.rollback()
             log.exception("Database error adding task: {0}".format(e))
             return None
         except Exception:
