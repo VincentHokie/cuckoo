@@ -26,6 +26,9 @@ def upgrade():
         sa.Column("ram", sa.Integer(), nullable=False),
         sa.Column("file_log", sa.String(length=64), nullable=False),
         sa.Column("status", sa.String(length=64), nullable=True),
+        sa.Column(
+            "picked_up", sa.Boolean, nullable=False, default=False
+        ),
         sa.PrimaryKeyConstraint("id")
     )
 
