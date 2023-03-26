@@ -1,4 +1,4 @@
-import os
+from os import walk
 import boto3
 import shutil
 import zipfile
@@ -78,7 +78,7 @@ class VirtualMachineRoutes(object):
             zip_ref.extractall(unzip_vdi_location)
         log.debug("Completed unzipping zip file..")
 
-        vdi_files = [y for x in os.walk(unzip_vdi_location) for y in glob(os.path.join(x[0], '*.vdi'))]
+        vdi_files = [y for x in walk(unzip_vdi_location) for y in glob(os.path.join(x[0], '*.vdi'))]
 
         if len(vdi_files) != 1:
             db.update_vm_import_status(vm_import_id, "No VDI File Found...")
