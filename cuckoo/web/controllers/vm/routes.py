@@ -37,7 +37,7 @@ class VirtualMachineRoutes(object):
             return render_template(request, "vm/import.html", available_vms=available_vms)
 
         if request.method != "POST":
-            return view_error(request, "Import analysis request must be POST!")
+            return view_error(request, "Import VM request must be POST!")
 
         init_console_logging(level=logging.DEBUG)
 
