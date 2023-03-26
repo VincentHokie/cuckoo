@@ -59,9 +59,9 @@ class VirtualMachineRoutes(object):
         timestamp = calendar.timegm(current_GMT)
 
         vm_import_id = db.add_vm_import(
-            vm_name = vmname, vm_file = vmfile, os = os,
-            os_version = osversion, os_arch = osarch, cpu = cpu,
-            ram = ram, file_log = vmfile + '-' + os + '-' + osarch + '-' + timestamp
+            vm_name = str(vmname), vm_file = str(vmfile), os = str(os),
+            os_version = str(osversion), os_arch = str(osarch), cpu = int(cpu),
+            ram = int(ram), file_log = "%s-%s-%s-%s" % (str(vmfile), str(os), str(osarch), str(timestamp))
         )
 
         zip_vdi_location = "/tmp/"
