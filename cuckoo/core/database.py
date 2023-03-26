@@ -313,6 +313,41 @@ class Error(Base):
     def __repr__(self):
         return "<Error('{0}','{1}','{2}')>".format(self.id, self.message, self.task_id)
 
+class VMImport(Base):
+    """VM Import tasks."""
+    __tablename__ = "vm_import"
+
+    id = Column(Integer(), primary_key=True)
+    vm_name = Column(String(64), nullable=False)
+    vm_file = Column(String(64), nullable=False)
+    os = Column(String(64), nullable=False)
+    os_version = Column(String(64), nullable=False)
+    os_arch = Column(String(64), nullable=False)
+    cpu = Column(Integer, nullable=False)
+    ram = Column(Integer, nullable=False)
+    file_log = Column(String(64), nullable=False)
+
+    # for future use when we can track the import process better
+    status = Column(String(64), nullable=True)
+
+    def to_dict(self):
+        """Convert object to dict.
+        @return: dict
+        """
+        d = {}
+        for column in self.__table__.columns:
+            d[column.name] = getattr(self, column.name)
+        return d
+
+    def to_json(self):
+        """Convert object to JSON.
+        @return: JSON data
+        """
+        return json.dumps(self.to_dict())
+
+    def __repr__(self):
+        return "<VMImport: '{0}'>".format(self.to_json())
+
 class Task(Base):
     """Analysis task queue."""
     __tablename__ = "tasks"
@@ -1136,6 +1171,93 @@ class Database(object):
             session.close()
 
         return task_id
+
+    @classlock
+    def add_vm_import(self, vm_name = None, vm_file = None, os = None,
+            os_version = None, os_arch = None, cpu = 0,
+            ram = 0, file_log = None):
+
+        """Add a VM Import task to database.
+        @param vm_name: object to add (File or URL).
+        @param vm_file: selected timeout.
+        @param os: analysis options.
+        @param os_version: analysis priority.
+        @param os_arch: custom options.
+        @param cpu: task owner.
+        @param ram: selected machine.
+        @param file_log: platform.
+        @return: cursor or None.
+        """
+        # TODO: parameter `package` is not mentioned in the function docstring
+        session = self.Session()
+
+        # Raise an exception when empty values are passed into thisfunction
+        vars = locals()
+        for key in vars:
+            if not vars.get(key):
+                log.exception(
+                    "Error: {0} cannot be a falsy value".format(key)
+                )
+                raise Exception
+
+        vm_import = VMImport(**vars)
+        session.add(vm_import)
+
+        try:
+            session.commit()
+            vm_import_id = vm_import.id
+        except IntegrityError:
+            session.rollback()
+            log.exception(
+                "Error adding a VM Import record: {0}".format(e)
+            )
+        except SQLAlchemyError as e:
+            log.exception("Database error adding task: {0}".format(e))
+        except Exception:
+            log.exception("Exception was caught: {0}".format(e))
+            session.rollback()
+        finally:
+            session.close()
+        
+        return vm_import_id
+
+    @classlock
+    def update_vm_import_status(self, id, status):
+
+        """Update the VM import task status to database.
+        @param id: object to add (File or URL).
+        @param status: selected timeout.
+        @return: cursor or None.
+        """
+        # TODO: parameter `package` is not mentioned in the function docstring
+        session = self.Session()
+
+        try:
+            vm_import = session.query(VMImport).filter_by(id=id).one()
+        except SQLAlchemyError as e:
+            log.exception(
+                "Error querying VM Import task: {0}".format(e)
+            )
+            session.close()
+            return None
+
+        vm_import.status = status
+        session.add(vm_import)
+
+        try:
+            session.commit()
+        except IntegrityError:
+            session.rollback()
+            log.exception(
+                "Error updating a VM Import record: {0}".format(e)
+            )
+        except SQLAlchemyError as e:
+            log.exception("Database error adding task: {0}".format(e))
+        except Exception:
+            log.exception("Exception was found: {0}".format(e))
+            session.rollback()
+        finally:
+            session.close()
 
     def add_path(self, file_path, timeout=0, package="", options="",
                  priority=1, custom="", owner="", machine="", platform="",
