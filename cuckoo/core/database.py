@@ -1200,7 +1200,15 @@ class Database(object):
                 )
                 raise Exception
 
-        vm_import = VMImport(**vars)
+        vm_import = VMImport()
+        vm_import.vm_name = vm_name
+        vm_import.vm_file = vm_file
+        vm_import.os = os
+        vm_import.os_version = os_version
+        vm_import.os_arch = os_arch
+        vm_import.cpu = cpu
+        vm_import.ram = ram
+        vm_import.file_log = file_log
         session.add(vm_import)
 
         try:
