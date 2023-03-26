@@ -1,4 +1,4 @@
-from os import walk
+from os import walk, path
 import boto3
 import shutil
 import zipfile
@@ -63,7 +63,7 @@ class VMImportManager(threading.Thread):
                 zip_ref.extractall(unzip_vdi_location)
             log.debug("Completed unzipping zip file..")
 
-            vdi_files = [y for x in walk(unzip_vdi_location) for y in glob(os.path.join(x[0], '*.vdi'))]
+            vdi_files = [y for x in walk(unzip_vdi_location) for y in glob(path.join(x[0], '*.vdi'))]
 
             if len(vdi_files) != 1:
                 self.db.update_vm_import_status(self.import_task.id, "No VDI File Found...")
@@ -71,7 +71,7 @@ class VMImportManager(threading.Thread):
                 exit()
 
             vdi_file = vdi_files[0]
-            _, filename = os.path.split(vdi_file)
+            _, filename = path.split(vdi_file)
             newvdiname = zip_vdi_location + "custom-" + filename
             shutil.move(vdi_file, newvdiname)
 
