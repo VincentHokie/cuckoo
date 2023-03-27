@@ -15,13 +15,6 @@ db = Database()
 
 class VirtualMachineRoutes(object):
 
-    @staticmethod
-    def success(request):
-        return render_template(request, "vm/success.html")
-    
-    @staticmethod
-    def error(request):
-        return render_template(request, "vm/error.html")
 
     @staticmethod
     def import_(request):
