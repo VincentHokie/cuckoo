@@ -2,6 +2,7 @@ import * as InterfaceControllers from './components/InterfaceControllers';
 import * as FileTree from './components/FileTree';
 import * as Analysis from './components/Analysis';
 import { SubmissionTaskTable } from './components/SubmissionTaskTable';
+import { ImportSubmissionTaskTable } from './components/ImportSubmissionTaskTable'
 
 // default values for the analysis options
 var default_analysis_options = {
@@ -676,6 +677,16 @@ $(function() {
 					window.open(`/analysis/${id}`);
 				});
 			}
+		});
+
+	}
+
+	// submission task summary init
+	if(document.getElementById('import-submission-task-table') !== null) {
+		var importTaskTable = new ImportSubmissionTaskTable({
+			el: document.getElementById('import-submission-task-table'),
+			debug: false, // set to true to do 10 calls max and stop
+			refreshRate: 5000,
 		});
 
 	}

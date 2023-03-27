@@ -1,0 +1,20 @@
+{{#each tasks}}
+	<tr data-task-id="{{id}}" class="{{#if is_ready}}finished{{/if}}">
+		<td>{{id}}</td>
+		<td>
+			<i class="fa fa-calendar-o"></i> {{date_added}}
+			<i class="fa fa-clock-o"></i> {{time_added}}
+		</td>
+		<td>{{vm_name}}</td>
+		<td>{{os}} {{os_version}}</td>
+		<td>{{os_arch}}</td>
+		<td>{{vm_file}}</td>
+		<td>{{cpu}}</td>
+		<td>{{ram}}</td>
+		<td class="postsubmit-status-display">
+			<div>
+				<div><span class="status status-{{status}}"></span> {{status}}</div>
+			</div>
+		</td>
+	</tr>
+{{/each}}

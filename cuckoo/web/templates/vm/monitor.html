@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{% block content %}
+
+<div class="flex-grid" id="post-submission">
+
+    <header class="flex-grid__header">
+        <h3>
+            Monitor your VM Import submissions here. Only the tasks that are in progress will be refreshed!
+        </h3>
+    </header>
+
+    <section class="flex-grid__body--center background-grey">
+        <div class="flex-grid__container">
+            <div class="flex-grid__column scrollable">
+
+                <h3 class="clearfix">Tasks: <small>Refreshes every 5 seconds</small></h3>
+                <table class="cuckoo-table" id="import-submission-task-table">
+                    <thead>
+                        <tr>
+                            <th>Task ID</th>
+                            <th>Date</th>
+                            <th>VM Imported</th>
+                            <th>Operating System</th>
+                            <th>Architecture</th>
+                            <th>Custom Name</th>
+                            <th>CPU Count</th>
+                            <th>RAM Size (GB)</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <td colspan="9">
+                            {% include "components/loader.html" %}
+                        </td>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="5" align="center">
+                                <p class="ajax-status">Loading import task info...</p>
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+
+            </div>
+        </div>
+    </section>
+
+    <footer class="flex-grid__footer">
+        <p class="footnote">
+            &copy;2010-2018 <a href="https://www.cuckoosandbox.org" target="_blank">Cuckoo Sandbox</a>
+        </p>
+        <div class="logo">
+            <img src="{% static "graphic/cuckoo_inverse.png" %}" alt="Cuckoo Malware Analysis Sandbox" />
+        </div>
+    </footer>
+
+</div>
+
+{% endblock %}
