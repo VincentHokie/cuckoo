@@ -131,12 +131,12 @@ def binary_filepath(task_id):
     return record["target"]["file"]["path"]
 
 def normalize_task(task):
-    if task["category"] == "file":
+    if task.get("category") == "file":
         task["target"] = os.path.basename(task["target"])
-    elif task["category"] == "url":
-        if task["target"].startswith(("http://", "https://")):
+    elif task.get("category") == "url":
+        if task.get("target").startswith(("http://", "https://")):
             task["target"] = "hxxp" + task["target"][4:]
-    elif task["category"] == "archive":
+    elif task.get("category") == "archive":
         task["target"] = "%s @ %s" % (
             task["options"]["filename"],
             os.path.basename(task["target"])
