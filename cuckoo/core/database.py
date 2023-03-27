@@ -327,6 +327,9 @@ class VMImport(Base):
     ram = Column(Integer, nullable=False)
     file_log = Column(String(64), nullable=False)
     picked_up = Column(Boolean, nullable=False, default=False)
+    added_on = Column(DateTime(timezone=False),
+                    default=datetime.datetime.now,
+                      nullable=False)
 
     # for future use when we can track the import process better
     status = Column(String(64), nullable=True)

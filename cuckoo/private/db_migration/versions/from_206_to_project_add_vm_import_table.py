@@ -10,6 +10,8 @@ Create Date: 2017-02-07 00:29:30.030173
 revision = "bb1024e614b7"
 down_revision = "cb1024e614b7"
 
+import datetime
+
 from alembic import op
 import sqlalchemy as sa
 
@@ -28,6 +30,10 @@ def upgrade():
         sa.Column("status", sa.String(length=64), nullable=True),
         sa.Column(
             "picked_up", sa.Boolean, nullable=False, default=False
+        ),
+        sa.Column(
+            "added_on", sa.DateTime(timezone=False),
+            default=datetime.datetime.now, nullable=False
         ),
         sa.PrimaryKeyConstraint("id")
     )
