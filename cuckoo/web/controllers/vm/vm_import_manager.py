@@ -92,6 +92,7 @@ class VMImportManager(threading.Thread):
             # vmcloack.install(custom_name=vmname)
             # vmcloack.snapshot(custom_name=vmname)
         except Exception as e:
+            self.db.update_vm_import_status(self.import_task.id, "Errors encountered.")
             log.error("[-] Error importing a VM: %s", e)
         finally:
             task_log_stop(self.timestamp)
