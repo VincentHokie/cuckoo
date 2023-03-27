@@ -1679,6 +1679,28 @@ class Database(object):
             session.close()
 
     @classlock
+    def view_import_tasks(self, task_ids):
+        """Retrieve information on a task.
+        @param task_id: ID of the task to query.
+        @return: details on the task.
+        """
+        session = self.Session()
+        try:
+            query = session.query(VMImport)
+            if len(task_ids):
+                query = query.filter(VMImport.id.in_(task_ids))
+            tasks = query.order_by(VMImport.id).all()
+        except SQLAlchemyError as e:
+            log.exception("Database error viewing tasks: {0}".format(e))
+            return []
+        else:
+            for task in tasks:
+                session.expunge(task)
+            return tasks
+        finally:
+            session.close()
+
+    @classlock
     def delete_task(self, task_id):
         """Delete information on a task.
         @param task_id: ID of the task to query.

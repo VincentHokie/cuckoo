@@ -8,5 +8,6 @@ from django.conf.urls import url
 from cuckoo.web.controllers.vm.routes import VirtualMachineRoutes
 
 urlpatterns = [
+    url(r"^api/info/$", VirtualMachineRoutes.tasks_info, name="vm/api/info"),
     url(r"^import/", VirtualMachineRoutes.import_, name="vm/import"),
 ]

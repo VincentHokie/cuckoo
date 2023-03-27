@@ -4,9 +4,14 @@ import calendar
 import time
 
 from django.shortcuts import redirect
+from django.http import JsonResponse
 
 from cuckoo.core.database import Database
-from cuckoo.web.utils import view_error, render_template
+from cuckoo.web.utils import (
+    api_post, json_error_response, view_error,
+    render_template, normalize_task
+)
+from cuckoo.common.utils import list_of_ints
 
 from cuckoo.core.startup import init_console_logging
 
@@ -15,6 +20,16 @@ db = Database()
 
 class VirtualMachineRoutes(object):
 
+    @api_post
+    def tasks_info(request, body):
+        task_ids = body.get("task_ids", [])
+        if task_ids and not list_of_ints(task_ids):
+            return json_error_response("Invalid task IDs given!")
+
+        data = {}
+        for task in db.view_import_tasks(task_ids):
+            data[task.id] = normalize_task(task.to_dict())
+        return JsonResponse({"status": True, "data": data}, safe=False)
 
     @staticmethod
     def import_(request):
