@@ -8,7 +8,7 @@ from django.http import JsonResponse
 
 from cuckoo.core.database import Database
 from cuckoo.web.utils import (
-    api_post, json_error_response, view_error,
+    api_post, api_get, json_error_response, view_error,
     render_template, normalize_task
 )
 from cuckoo.common.utils import list_of_ints
@@ -30,6 +30,10 @@ class VirtualMachineRoutes(object):
         for task in db.view_import_tasks(task_ids):
             data[task.id] = normalize_task(task.to_dict())
         return JsonResponse({"status": True, "data": data}, safe=False)
+
+    @api_get
+    def tasks_table(request):
+        return render_template(request, "vm/monitor.html")
 
     @staticmethod
     def import_(request):
@@ -67,4 +71,4 @@ class VirtualMachineRoutes(object):
             ram = int(ram), file_log = "%s-%s-%s-%s" % (str(vmfile), str(os), str(osarch), str(timestamp))
         )
 
-        return redirect("vm/success")
+        return redirect("vm/info")
