@@ -1,5 +1,5 @@
 from os import walk, path
-import boto3
+import random
 import shutil
 import zipfile
 import logging
@@ -7,6 +7,9 @@ from glob import glob
 import calendar
 import time
 import threading
+
+import subprocess
+from IPy import IP
 
 from cuckoo.core.log import task_log_start, task_log_stop
 
@@ -77,10 +80,36 @@ class VMImportManager(threading.Thread):
 
             self.db.update_vm_import_status(self.import_task.id, "Importing VM...")
 
-            import subprocess
-            cmd = ["/home/ubuntu/vmcloak.sh", str(int(ram) * 1024), str(osarch), str(osversion), str(vmname), str(cpu), str(newvdiname)]
+            # (as dynamically as possible, find what IP address we can use for the VM being imported)
+            network = "192.168.56.0/24"
+            ip_addresses = IP(network)
+            all_ip_addresses = [ip_address for ip_address in ip_addresses]
+            taken_ips = set()
+
+            # get all the VMCloack VM IPs
+            vmcloak_response = subprocess.check_output(["/home/ubuntu/venv/bin/vmcloak", "list", "vms"])
+            # add the VMCloak IPs to the taken_ips
+            taken_ips = set([new_split.split(" ")[1] for new_split in vmcloak_response.strip().split("\n")])
+
+            # assuming only 1 exists
+            dhcpservers_response = subprocess.check_output(["vboxmanage", "list", "dhcpservers"])
+            dhcpservers_output = {new_split.split(":")[0]: new_split.split(":")[1].strip() for new_split in dhcpservers_response.strip().split("\n")}
+
+            # add the dhcpserver IP to the taken IPs
+            taken_ips.add(dhcpservers_output["IP"])
+            # add the network, gateway, and broadcast addresses to the taken IPs
+            taken_ips.update([all_ip_addresses[0], all_ip_addresses[1], all_ip_addresses[-1]])
+
+            # remain with a list of available IPs
+            available_ips = set(all_ip_addresses) - set(taken_ips)
+
+            if len(available_ips) == 0:
+                self.db.update_vm_import_status(self.import_task.id, "No Available IP Addresses")
+                raise Exception("No available IP addresses in the %s network." % network)
+
+            cmd = ["/home/ubuntu/vmcloak.sh", str(int(ram) * 1024), str(osarch), str(osversion), str(vmname), str(cpu), str(newvdiname), str(random.choice(available_ips))]
             log.debug("Running command: %s", cmd)
-            ret = subprocess.check_output(cmd)
+            subprocess.check_output(cmd)
             self.db.update_vm_import_status(self.import_task.id, "VM Import Complete!")
 
             log.debug("VM Import process complete!")
