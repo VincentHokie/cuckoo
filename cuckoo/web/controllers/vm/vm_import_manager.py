@@ -83,7 +83,7 @@ class VMImportManager(threading.Thread):
             # (as dynamically as possible, find what IP address we can use for the VM being imported)
             network = "192.168.56.0/24"
             ip_addresses = IP(network)
-            all_ip_addresses = [ip_address for ip_address in ip_addresses]
+            all_ip_addresses = [str(ip_address) for ip_address in ip_addresses]
             taken_ips = set()
 
             # get all the VMCloack VM IPs
@@ -101,13 +101,13 @@ class VMImportManager(threading.Thread):
             taken_ips.update([all_ip_addresses[0], all_ip_addresses[1], all_ip_addresses[-1]])
 
             # remain with a list of available IPs
-            available_ips = set(all_ip_addresses) - set(taken_ips)
+            available_ips = set(all_ip_addresses) - taken_ips
 
             if len(available_ips) == 0:
                 self.db.update_vm_import_status(self.import_task.id, "No Available IP Addresses")
                 raise Exception("No available IP addresses in the %s network." % network)
 
-            cmd = ["/home/ubuntu/vmcloak.sh", str(int(ram) * 1024), str(osarch), str(osversion), str(vmname), str(cpu), str(newvdiname), str(random.choice(available_ips))]
+            cmd = ["/home/ubuntu/vmcloak.sh", str(int(ram) * 1024), str(osarch), str(osversion), str(vmname), str(cpu), str(newvdiname), str(random.choice(list(available_ips)))]
             log.debug("Running command: %s", cmd)
             subprocess.check_output(cmd)
             self.db.update_vm_import_status(self.import_task.id, "VM Import Complete!")
