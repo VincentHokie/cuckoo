@@ -2,6 +2,7 @@
 const TEMPLATES = {
 	TopSelect: HANDLEBARS_TEMPLATES['control-top-select'],
 	SimpleSelect: HANDLEBARS_TEMPLATES['control-simple-select'],
+	MultipleSelect: HANDLEBARS_TEMPLATES['control-multiple-select'],
 	ToggleList: HANDLEBARS_TEMPLATES['control-toggle-list']
 }
 
@@ -210,6 +211,52 @@ class SimpleSelect extends UserInputController {
 		this.view.afterRender(function(controller) {
 			$(this).find('select').bind('change', function() {
 				controller.setValue(this.value);
+			});
+		});
+
+	}
+
+}
+
+// MULTIPLESELECT CONSTRUCTOR (EXTENDS USERINPUTCONTROLLER)
+class MultipleSelect extends UserInputController {
+
+	constructor(config) {
+		super(config);
+		this.options = config.options;
+
+		this.initialise();
+	}
+
+	initialise() {
+
+		var self = this;
+		this.view.template = TEMPLATES.MultipleSelect;
+
+		this.view.setupModel({
+			options: this.options,
+			doc_link: this.config.doc_link
+		});
+
+		if(this.default) {
+			this.options.forEach(function(opt) {
+				if(opt.value == self.default) {
+					opt.selected = true;
+					self.setValue(self.default);
+				}
+			});
+		}
+
+		this.view.afterRender(function(controller) {
+			$(this).find('select').bind('change', function() {
+				var optValues = [];
+				for(var index = 0; index < this.options.length; index++) {
+					var opt = this.options[index];
+					if (opt.selected == true) {
+						optValues.push(opt.value);
+					}
+				}
+				controller.setValue(optValues);
 			});
 		});
 
@@ -590,6 +637,7 @@ class Form {
 		this.config.configure.call({
 			TopSelect: TopSelect,
 			SimpleSelect: SimpleSelect,
+			MultipleSelect: MultipleSelect,
 			Split: Split,
 			ToggleList: ToggleList
 		}, this);
@@ -696,4 +744,4 @@ class Form {
 
 }
 
-export { SimpleSelect, TopSelect, Split, ToggleList, Form }
+export { SimpleSelect, MultipleSelect, TopSelect, Split, ToggleList, Form }

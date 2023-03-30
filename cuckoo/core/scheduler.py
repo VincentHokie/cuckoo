@@ -9,6 +9,11 @@ import shutil
 import logging
 import threading
 import Queue
+import boto3
+import shutil
+import json
+from dateutil.parser import parse
+from botocore.exceptions import ClientError
 
 import cuckoo
 
@@ -28,6 +33,7 @@ from cuckoo.core.log import task_log_start, task_log_stop, logger
 from cuckoo.core.resultserver import ResultServer, RESULT_DIRECTORIES
 from cuckoo.core.rooter import rooter
 from cuckoo.misc import cwd
+from cuckoo.web.controllers.vm.vm_import_manager import VMImportManager
 
 log = logging.getLogger(__name__)
 
@@ -796,6 +802,21 @@ class AnalysisManager(threading.Thread):
                     "status": "success",
                 }
             )
+
+            try:
+                log.debug("Uploading zipped analysis file to AWS")
+                analysis_path = cwd("storage", "analyses", "%s" % self.task.id)
+                shutil.make_archive(analysis_path, 'zip', analysis_path)
+                
+                s3_client = boto3.client('s3')
+                thjson = json.load(open(analysis_path + "/task.json"))
+                parsed = parse(thjson['started_on']['$dt'])
+                filename = thjson['target'].split("/")[-1] + "/" + thjson['platform'] + "/" + thjson['machine'][3:-4] + "/" + thjson['machine'][5:-1] + "/" + str(parsed.year) + "/" + str(parsed.month) + "/" + str(parsed.day) + "/" + thjson['completed_on']['$dt']
+                s3_client.upload_file(analysis_path + '.zip', 'final-project-cuckoo-analyses', filename)
+                log.debug("Finished uploading zipped analysis file to AWS")
+
+            except ClientError as e:
+                log.exception("Failed to upload sample analysis results to AWS: ", e)
         except:
             log.exception("Failure in AnalysisManager.run", extra={
                 "action": "task.stop",
@@ -845,6 +866,7 @@ class Scheduler(object):
         self.maxcount = maxcount
         self.total_analysis_count = 0
         self.analysis_managers = set()
+        self.import_managers = set()
 
     def initialize(self):
         """Initialize the machine manager."""
@@ -934,6 +956,13 @@ class Scheduler(object):
         """Stop scheduler."""
         self.running = False
 
+        # Force stop all import managers.
+        for am in self.import_managers:
+            try:
+                am.force_stop()
+            except Exception as e:
+                log.exception("Error force stopping import manager: %s", e)
+
         # Force stop all analysis managers.
         for am in self.analysis_managers:
             try:
@@ -965,11 +994,18 @@ class Scheduler(object):
                 cleaned.add(am)
         return cleaned
 
+    def _cleanup_import_managers(self):
+        cleaned = set()
+        for am in self.import_managers:
+            if not am.isAlive():
+                cleaned.add(am)
+        return cleaned
+
     def start(self):
         """Start scheduler."""
         self.initialize()
 
-        log.info("Waiting for analysis tasks.")
+        log.info("Waiting for analysis and import tasks.")
 
         # Message queue with threads to transmit exceptions (used as IPC).
         errors = Queue.Queue()
@@ -978,6 +1014,9 @@ class Scheduler(object):
         if self.maxcount is None:
             self.maxcount = self.cfg.cuckoo.max_analysis_count
 
+        vms_bucket = "final-project-cuckoo-vms"
+        s3_client = boto3.client("s3")
+
         # This loop runs forever.
         while self.running:
             time.sleep(1)
@@ -985,6 +1024,21 @@ class Scheduler(object):
             # Run cleanup on finished analysis managers and untrack them
             for am in self._cleanup_managers():
                 self.analysis_managers.discard(am)
+            
+            # Run cleanup on finished import managers and untrack them
+            for am in self._cleanup_import_managers():
+                self.import_managers.discard(am)
+            
+            import_task = self.db.get_import_task_to_process()
+
+            if import_task:
+                log.debug("Processing import task #%s", import_task.id)
+
+                # Initialize and start the import manager.
+                import_manager = VMImportManager(s3_client, vms_bucket, self.db, import_task)
+                import_manager.daemon = True
+                import_manager.start()
+                self.import_managers.add(import_manager)
 
             # Wait until the machine lock is not locked. This is only the case
             # when all machines are fully running, rather that about to start
@@ -1101,4 +1155,4 @@ class Scheduler(object):
             except Queue.Empty:
                 pass
 
-        log.debug("End of analyses.")
+        log.debug("End of imports and analyses.")

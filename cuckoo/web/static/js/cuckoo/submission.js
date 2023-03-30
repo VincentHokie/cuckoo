@@ -139,7 +139,7 @@ var AnalysisInterface = function () {
 
 exports.AnalysisInterface = AnalysisInterface;
 
-},{"./DnDUpload":2,"./FileTree":3,"./InterfaceControllers":4}],2:[function(require,module,exports){
+},{"./DnDUpload":2,"./FileTree":3,"./InterfaceControllers":5}],2:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1439,6 +1439,139 @@ Object.defineProperty(exports, "__esModule", {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var ImportSubmissionTaskTable = function () {
+	function ImportSubmissionTaskTable(options) {
+		_classCallCheck(this, ImportSubmissionTaskTable);
+
+		var self = this;
+
+		this.el = options.el;
+		this.interval = null;
+		this.refreshRate = options.refreshRate ? options.refreshRate : 1000; // ms
+		this.debug = options.debug;
+		this.request_pending = false;
+		this.onRender = options.onRender ? options.onRender : function () {};
+
+		// debug
+		this.stopIntervalling = 1;
+		this.curInterval = 0;
+
+		this.interval = setInterval(function () {
+			self._status();
+			self.curInterval += 1;
+
+			// debug
+			if (self.debug && self.curInterval == self.stopIntervalling) {
+				self._clear();
+			}
+		}, this.refreshRate);
+
+		self._status();
+	}
+
+	// does a status check
+
+
+	_createClass(ImportSubmissionTaskTable, [{
+		key: '_status',
+		value: function _status(callback) {
+
+			var self = this;
+
+			// this blocks out making requests if we are already doing a request.
+			// this makes every request 'wait' untill all requests did finish.
+			if (this.request_pending) return;
+			this.request_pending = true;
+
+			this.setStatusText('Getting status...');
+
+			CuckooWeb.api_post('/vm/api/info/', {}, function (response) {
+				self._data(response);
+				self.request_pending = false;
+			}, function (err) {
+				self._clear();
+				self.setStatusText('There was an error!');
+			});
+		}
+
+		// processes the data
+
+	}, {
+		key: '_data',
+		value: function _data(response) {
+
+			this.setStatusText('Done');
+
+			var data = response.data;
+
+			// building the check, but it's always an object,
+			// so do some array formatting here, while keeping
+			// the correct order.
+			if (!(data instanceof Array)) {
+				var arr = [];
+				for (var d in response.data) {
+					arr.push(response.data[d]);
+				}
+				data = arr.sort(function (a, b) {
+					return a.id > b.id;
+				});
+			}
+
+			// humanize the date formats, or any other kind of data
+			data = data.map(function (item) {
+				item.date_added = moment(item.added_on).format('DD/MM/YYYY');
+				item.time_added = moment(item.added_on).format('HH:mm');
+				var is_complete = item.status.indexOf("Complete");
+				item.is_ready = is_complete;
+				item.is_running = !is_complete;
+				item.queued = item.picked_up == 't';
+				return item;
+			});
+
+			this._draw(data);
+		}
+
+		// draws the table content from Handlebars into the table
+
+	}, {
+		key: '_draw',
+		value: function _draw(data) {
+			var template = HANDLEBARS_TEMPLATES['import-submission-task-table-body'];
+			$(this.el).find('tbody').html(template({ tasks: data }));
+			this.onRender($(this.el));
+		}
+
+		// clears the interval
+
+	}, {
+		key: '_clear',
+		value: function _clear() {
+			if (this.interval) clearInterval(this.interval);
+			this.request_pending = false;
+		}
+	}, {
+		key: 'setStatusText',
+		value: function setStatusText(text) {
+			$(this.el).find('tfoot .ajax-status').text(text);
+		}
+	}]);
+
+	return ImportSubmissionTaskTable;
+}();
+
+exports.ImportSubmissionTaskTable = ImportSubmissionTaskTable;
+
+},{}],5:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
@@ -1449,6 +1582,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 var TEMPLATES = {
 	TopSelect: HANDLEBARS_TEMPLATES['control-top-select'],
 	SimpleSelect: HANDLEBARS_TEMPLATES['control-simple-select'],
+	MultipleSelect: HANDLEBARS_TEMPLATES['control-multiple-select'],
 	ToggleList: HANDLEBARS_TEMPLATES['control-toggle-list']
 
 	// renders two interface controllers onto one row
@@ -1704,25 +1838,81 @@ var SimpleSelect = function (_UserInputController) {
 	return SimpleSelect;
 }(UserInputController);
 
+// MULTIPLESELECT CONSTRUCTOR (EXTENDS USERINPUTCONTROLLER)
+
+
+var MultipleSelect = function (_UserInputController2) {
+	_inherits(MultipleSelect, _UserInputController2);
+
+	function MultipleSelect(config) {
+		_classCallCheck(this, MultipleSelect);
+
+		var _this2 = _possibleConstructorReturn(this, (MultipleSelect.__proto__ || Object.getPrototypeOf(MultipleSelect)).call(this, config));
+
+		_this2.options = config.options;
+
+		_this2.initialise();
+		return _this2;
+	}
+
+	_createClass(MultipleSelect, [{
+		key: 'initialise',
+		value: function initialise() {
+
+			var self = this;
+			this.view.template = TEMPLATES.MultipleSelect;
+
+			this.view.setupModel({
+				options: this.options,
+				doc_link: this.config.doc_link
+			});
+
+			if (this.default) {
+				this.options.forEach(function (opt) {
+					if (opt.value == self.default) {
+						opt.selected = true;
+						self.setValue(self.default);
+					}
+				});
+			}
+
+			this.view.afterRender(function (controller) {
+				$(this).find('select').bind('change', function () {
+					var optValues = [];
+					for (var index = 0; index < this.options.length; index++) {
+						var opt = this.options[index];
+						if (opt.selected == true) {
+							optValues.push(opt.value);
+						}
+					}
+					controller.setValue(optValues);
+				});
+			});
+		}
+	}]);
+
+	return MultipleSelect;
+}(UserInputController);
+
 // TOPSELECT CONSTRUCTOR (EXTENDS USERINPUTCONTROLLER)
 
 
-var TopSelect = function (_UserInputController2) {
-	_inherits(TopSelect, _UserInputController2);
+var TopSelect = function (_UserInputController3) {
+	_inherits(TopSelect, _UserInputController3);
 
 	function TopSelect(config) {
 		_classCallCheck(this, TopSelect);
 
 		if (!config) config = {};
 
-		var _this2 = _possibleConstructorReturn(this, (TopSelect.__proto__ || Object.getPrototypeOf(TopSelect)).call(this, config));
+		var _this3 = _possibleConstructorReturn(this, (TopSelect.__proto__ || Object.getPrototypeOf(TopSelect)).call(this, config));
 
-		_this2.options = _this2.config.options;
-		_this2.extra_select = _this2.config.extra_select;
-		_this2.units = _this2.config.units;
+		_this3.options = _this3.config.options;
+		_this3.extra_select = _this3.config.extra_select;
+		_this3.units = _this3.config.units;
 
-		_this2.initialise();
-		return _this2;
+		_this3.initialise();
+		return _this3;
 	}
 
 	_createClass(TopSelect, [{
@@ -1869,29 +2059,29 @@ var TopSelect = function (_UserInputController2) {
 // TOGGLE LIST with support for EXTRA USER INPUT
 
 
-var ToggleList = function (_UserInputController3) {
-	_inherits(ToggleList, _UserInputController3);
+var ToggleList = function (_UserInputController4) {
+	_inherits(ToggleList, _UserInputController4);
 
 	function ToggleList(config) {
 		_classCallCheck(this, ToggleList);
 
-		var _this3 = _possibleConstructorReturn(this, (ToggleList.__proto__ || Object.getPrototypeOf(ToggleList)).call(this, config));
+		var _this4 = _possibleConstructorReturn(this, (ToggleList.__proto__ || Object.getPrototypeOf(ToggleList)).call(this, config));
 
-		_this3.initialised = false;
-		_this3.options = config.options;
-		_this3.config = config;
-		_this3.value = {};
-		_this3.custom_options = config.custom_options || {};
-		_this3.options_extra_predefined = config.options_extra_predefined || [];
+		_this4.initialised = false;
+		_this4.options = config.options;
+		_this4.config = config;
+		_this4.value = {};
+		_this4.custom_options = config.custom_options || {};
+		_this4.options_extra_predefined = config.options_extra_predefined || [];
 
-		_this3.events = $.extend(_this3.events, {
+		_this4.events = $.extend(_this4.events, {
 			remove: []
 		});
 
-		if (_this3.default) {
-			var self = _this3;
+		if (_this4.default) {
+			var self = _this4;
 
-			_this3.options = _this3.options.map(function (option) {
+			_this4.options = _this4.options.map(function (option) {
 				option.selected = false;
 				if (self.default[option.name] === true) {
 					option.selected = true;
@@ -1900,8 +2090,8 @@ var ToggleList = function (_UserInputController3) {
 			});
 		}
 
-		_this3.initialise();
-		return _this3;
+		_this4.initialise();
+		return _this4;
 	}
 
 	_createClass(ToggleList, [{
@@ -2097,6 +2287,7 @@ var Form = function () {
 		this.config.configure.call({
 			TopSelect: TopSelect,
 			SimpleSelect: SimpleSelect,
+			MultipleSelect: MultipleSelect,
 			Split: Split,
 			ToggleList: ToggleList
 		}, this);
@@ -2206,12 +2397,13 @@ var Form = function () {
 }();
 
 exports.SimpleSelect = SimpleSelect;
+exports.MultipleSelect = MultipleSelect;
 exports.TopSelect = TopSelect;
 exports.Split = Split;
 exports.ToggleList = ToggleList;
 exports.Form = Form;
 
-},{}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2349,7 +2541,7 @@ var SubmissionTaskTable = function () {
 
 exports.SubmissionTaskTable = SubmissionTaskTable;
 
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 'use strict';
 
 var _InterfaceControllers = require('./components/InterfaceControllers');
@@ -2365,6 +2557,8 @@ var _Analysis = require('./components/Analysis');
 var Analysis = _interopRequireWildcard(_Analysis);
 
 var _SubmissionTaskTable = require('./components/SubmissionTaskTable');
+
+var _ImportSubmissionTaskTable = require('./components/ImportSubmissionTaskTable');
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
@@ -2737,9 +2931,9 @@ $(function () {
 										}
 									});
 
-									var machine = new this.SimpleSelect({
+									var machine = new this.MultipleSelect({
 										name: 'machine-' + item.filetree.index,
-										title: 'Machine',
+										title: 'Machines',
 										default: item.per_file_options['machine'],
 										options: default_analysis_options.available_machines
 									}).on('change', function (value) {
@@ -2814,9 +3008,9 @@ $(function () {
 						options: submission_options
 					});
 
-					var machine = new this.SimpleSelect({
+					var machine = new this.MultipleSelect({
 						name: 'machine',
-						title: 'Machine',
+						title: 'Machines',
 						default: default_analysis_options['machine'],
 						options: default_analysis_options['available_machines']
 					});
@@ -2982,9 +3176,18 @@ $(function () {
 			}
 		});
 	}
+
+	// submission task summary init
+	if (document.getElementById('import-submission-task-table') !== null) {
+		var importTaskTable = new _ImportSubmissionTaskTable.ImportSubmissionTaskTable({
+			el: document.getElementById('import-submission-task-table'),
+			debug: false, // set to true to do 10 calls max and stop
+			refreshRate: 5000
+		});
+	}
 });
 
-},{"./components/Analysis":1,"./components/FileTree":3,"./components/InterfaceControllers":4,"./components/SubmissionTaskTable":5}]},{},[6])
+},{"./components/Analysis":1,"./components/FileTree":3,"./components/ImportSubmissionTaskTable":4,"./components/InterfaceControllers":5,"./components/SubmissionTaskTable":6}]},{},[7])
 
 
 //# sourceMappingURL=submission.js.map

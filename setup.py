@@ -218,6 +218,7 @@ do_setup(
         "unicorn==1.0.1",
         "wakeonlan==0.2.2",
         "yara-python==3.6.3",
+        "IPy==1.01",
     ],
     extras_require={
         ":sys_platform == 'win32'": [

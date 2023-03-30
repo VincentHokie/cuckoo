@@ -220,100 +220,102 @@ class SubmitManager(object):
             options = copy.deepcopy(config["global"]["options"])
             options.update(entry.get("options", {}).get("options", {}))
 
-            machine = info.get("machine")
-            if machine:
-                if machine not in machines:
-                    m = db.view_machine(machine)
-                    # TODO Add error handling for missing machine entry.
-                    machines[machine] = m.label if m else None
+            form_machines = info.get("machine")
 
-                machine = machines[machine]
-            else:
-                machine = None
+            for machine in form_machines:
+                if machine:
+                    if machine not in machines:
+                        m = db.view_machine(machine)
+                        # TODO Add error handling for missing machine entry.
+                        machines[machine] = m.label if m else None
 
-            kw = {
-                "package": info.get("package") or "",
-                "timeout": info.get("timeout", 120),
-                "priority": info.get("priority"),
-                "custom": info.get("custom"),
-                "owner": info.get("owner"),
-                "tags": info.get("tags"),
-                "memory": options.get("full-memory-dump"),
-                "enforce_timeout": options.get("enforce-timeout"),
-                "machine": machine,
-                "platform": info.get("platform"),
-                "options": self.translate_options_from(info, options),
-                "submit_id": submit_id,
-            }
+                    machine = machines[machine]
+                else:
+                    machine = None
 
-            if entry["type"] == "url":
-                ret.append(db.add_url(
-                    url=info["filename"], **kw
-                ))
-                continue
+                kw = {
+                    "package": info.get("package") or "",
+                    "timeout": info.get("timeout", 120),
+                    "priority": info.get("priority"),
+                    "custom": info.get("custom"),
+                    "owner": info.get("owner"),
+                    "tags": info.get("tags"),
+                    "memory": options.get("full-memory-dump"),
+                    "enforce_timeout": options.get("enforce-timeout"),
+                    "machine": machine,
+                    "platform": info.get("platform"),
+                    "options": self.translate_options_from(info, options),
+                    "submit_id": submit_id,
+                }
 
-            # for each selected file entry, create a new temp. folder
-            path_dest = Folders.create_temp()
-
-            if not info["extrpath"]:
-                path = os.path.join(
-                    submit.tmp_path, os.path.basename(info["filename"])
-                )
-
-                filepath = Files.copy(path, path_dest=path_dest)
-
-                ret.append(db.add_path(
-                    file_path=filepath, **kw
-                ))
-            elif len(info["extrpath"]) == 1:
-                arcpath = os.path.join(
-                    submit.tmp_path, os.path.basename(info["arcname"])
-                )
-                if not os.path.exists(arcpath):
-                    submit.data["errors"].append(
-                        "Unable to find parent archive file: %s" %
-                        os.path.basename(info["arcname"])
-                    )
+                if entry["type"] == "url":
+                    ret.append(db.add_url(
+                        url=info["filename"], **kw
+                    ))
                     continue
 
-                arc = sflock.zipify(sflock.unpack(
-                    contents=open(arcpath, "rb").read(),
-                    filename=info["arcname"]
-                ))
+                # for each selected file entry, create a new temp. folder
+                path_dest = Folders.create_temp()
 
-                # Create a .zip archive out of this container.
-                arcpath = Files.temp_named_put(
-                    arc, os.path.basename(info["arcname"])
-                )
-
-                ret.append(db.add_archive(
-                    file_path=arcpath, filename=info["relaname"], **kw
-                ))
-            else:
-                arcpath = os.path.join(
-                    submit.tmp_path, os.path.basename(info["arcname"])
-                )
-                if not os.path.exists(arcpath):
-                    submit.data["errors"].append(
-                        "Unable to find parent archive file: %s" %
-                        os.path.basename(info["arcname"])
+                if not info["extrpath"]:
+                    path = os.path.join(
+                        submit.tmp_path, os.path.basename(info["filename"])
                     )
-                    continue
 
-                content = sflock.unpack(arcpath).read(info["extrpath"][:-1])
-                subarc = sflock.unpack(
-                    contents=content, filename=info["extrpath"][-2]
-                )
+                    filepath = Files.copy(path, path_dest=path_dest)
 
-                # Write intermediate .zip archive file.
-                arcpath = Files.temp_named_put(
-                    sflock.zipify(subarc),
-                    os.path.basename(info["extrpath"][-2])
-                )
+                    ret.append(db.add_path(
+                        file_path=filepath, **kw
+                    ))
+                elif len(info["extrpath"]) == 1:
+                    arcpath = os.path.join(
+                        submit.tmp_path, os.path.basename(info["arcname"])
+                    )
+                    if not os.path.exists(arcpath):
+                        submit.data["errors"].append(
+                            "Unable to find parent archive file: %s" %
+                            os.path.basename(info["arcname"])
+                        )
+                        continue
 
-                ret.append(db.add_archive(
-                    file_path=arcpath, filename=info["relaname"], **kw
-                ))
+                    arc = sflock.zipify(sflock.unpack(
+                        contents=open(arcpath, "rb").read(),
+                        filename=info["arcname"]
+                    ))
+
+                    # Create a .zip archive out of this container.
+                    arcpath = Files.temp_named_put(
+                        arc, os.path.basename(info["arcname"])
+                    )
+
+                    ret.append(db.add_archive(
+                        file_path=arcpath, filename=info["relaname"], **kw
+                    ))
+                else:
+                    arcpath = os.path.join(
+                        submit.tmp_path, os.path.basename(info["arcname"])
+                    )
+                    if not os.path.exists(arcpath):
+                        submit.data["errors"].append(
+                            "Unable to find parent archive file: %s" %
+                            os.path.basename(info["arcname"])
+                        )
+                        continue
+
+                    content = sflock.unpack(arcpath).read(info["extrpath"][:-1])
+                    subarc = sflock.unpack(
+                        contents=content, filename=info["extrpath"][-2]
+                    )
+
+                    # Write intermediate .zip archive file.
+                    arcpath = Files.temp_named_put(
+                        sflock.zipify(subarc),
+                        os.path.basename(info["extrpath"][-2])
+                    )
+
+                    ret.append(db.add_archive(
+                        file_path=arcpath, filename=info["relaname"], **kw
+                    ))
 
         return ret
 

@@ -14,6 +14,37 @@ this["HANDLEBARS_TEMPLATES"]["code"] = Handlebars.template({"1":function(depth0,
     + this.escapeExpression(((helper = (helper = helpers.code || (depth0 != null ? depth0.code : depth0)) != null ? helper : helpers.helperMissing),(typeof helper === "function" ? helper.call(depth0,{"name":"code","hash":{},"data":data}) : helper)))
     + "</code>\n	</pre>\n</div>";
 },"useData":true});
+this["HANDLEBARS_TEMPLATES"]["control-multiple-select"] = Handlebars.template({"1":function(depth0,helpers,partials,data) {
+    var helper;
+
+  return "<a href=\""
+    + this.escapeExpression(((helper = (helper = helpers.doc_link || (depth0 != null ? depth0.doc_link : depth0)) != null ? helper : helpers.helperMissing),(typeof helper === "function" ? helper.call(depth0,{"name":"doc_link","hash":{},"data":data}) : helper)))
+    + "\" target=\"_blank\"><i class=\"fa fa-info-circle\"></i></a>";
+},"3":function(depth0,helpers,partials,data) {
+    var stack1, helper, alias1=helpers.helperMissing, alias2="function", alias3=this.escapeExpression;
+
+  return "				<option value=\""
+    + alias3(((helper = (helper = helpers.value || (depth0 != null ? depth0.value : depth0)) != null ? helper : alias1),(typeof helper === alias2 ? helper.call(depth0,{"name":"value","hash":{},"data":data}) : helper)))
+    + "\" "
+    + ((stack1 = helpers['if'].call(depth0,(depth0 != null ? depth0.selected : depth0),{"name":"if","hash":{},"fn":this.program(4, data, 0),"inverse":this.noop,"data":data})) != null ? stack1 : "")
+    + ">"
+    + alias3(((helper = (helper = helpers.name || (depth0 != null ? depth0.name : depth0)) != null ? helper : alias1),(typeof helper === alias2 ? helper.call(depth0,{"name":"name","hash":{},"data":data}) : helper)))
+    + "</option>\n";
+},"4":function(depth0,helpers,partials,data) {
+    return "selected";
+},"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+    var stack1, helper, alias1=helpers.helperMissing, alias2="function", alias3=this.escapeExpression;
+
+  return "	<legend class=\"flex-form__field-title\">"
+    + alias3(((helper = (helper = helpers.title || (depth0 != null ? depth0.title : depth0)) != null ? helper : alias1),(typeof helper === alias2 ? helper.call(depth0,{"name":"title","hash":{},"data":data}) : helper)))
+    + " "
+    + ((stack1 = helpers['if'].call(depth0,(depth0 != null ? depth0.doc_link : depth0),{"name":"if","hash":{},"fn":this.program(1, data, 0),"inverse":this.noop,"data":data})) != null ? stack1 : "")
+    + "</legend>\n	<div class=\"flex-form__select\">\n		<select multiple name=\""
+    + alias3(((helper = (helper = helpers.name || (depth0 != null ? depth0.name : depth0)) != null ? helper : alias1),(typeof helper === alias2 ? helper.call(depth0,{"name":"name","hash":{},"data":data}) : helper)))
+    + "\">\n"
+    + ((stack1 = helpers.each.call(depth0,(depth0 != null ? depth0.options : depth0),{"name":"each","hash":{},"fn":this.program(3, data, 0),"inverse":this.noop,"data":data})) != null ? stack1 : "")
+    + "		</select>\n	</div>";
+},"useData":true});
 this["HANDLEBARS_TEMPLATES"]["control-simple-select"] = Handlebars.template({"1":function(depth0,helpers,partials,data) {
     var helper;
 
@@ -314,6 +345,45 @@ this["HANDLEBARS_TEMPLATES"]["header-table"] = Handlebars.template({"1":function
     + ">\n	<tbody>\n"
     + ((stack1 = helpers.each.call(depth0,(depth0 != null ? depth0.keyv : depth0),{"name":"each","hash":{},"fn":this.program(3, data, 0),"inverse":this.noop,"data":data})) != null ? stack1 : "")
     + "	</tbody>\n</table>";
+},"useData":true});
+this["HANDLEBARS_TEMPLATES"]["import-submission-task-table-body"] = Handlebars.template({"1":function(depth0,helpers,partials,data) {
+    var stack1, helper, alias1=helpers.helperMissing, alias2="function", alias3=this.escapeExpression;
+
+  return "	<tr data-task-id=\""
+    + alias3(((helper = (helper = helpers.id || (depth0 != null ? depth0.id : depth0)) != null ? helper : alias1),(typeof helper === alias2 ? helper.call(depth0,{"name":"id","hash":{},"data":data}) : helper)))
+    + "\" class=\""
+    + ((stack1 = helpers['if'].call(depth0,(depth0 != null ? depth0.is_ready : depth0),{"name":"if","hash":{},"fn":this.program(2, data, 0),"inverse":this.noop,"data":data})) != null ? stack1 : "")
+    + "\">\n		<td>"
+    + alias3(((helper = (helper = helpers.id || (depth0 != null ? depth0.id : depth0)) != null ? helper : alias1),(typeof helper === alias2 ? helper.call(depth0,{"name":"id","hash":{},"data":data}) : helper)))
+    + "</td>\n		<td>\n			<i class=\"fa fa-calendar-o\"></i> "
+    + alias3(((helper = (helper = helpers.date_added || (depth0 != null ? depth0.date_added : depth0)) != null ? helper : alias1),(typeof helper === alias2 ? helper.call(depth0,{"name":"date_added","hash":{},"data":data}) : helper)))
+    + "\n			<i class=\"fa fa-clock-o\"></i> "
+    + alias3(((helper = (helper = helpers.time_added || (depth0 != null ? depth0.time_added : depth0)) != null ? helper : alias1),(typeof helper === alias2 ? helper.call(depth0,{"name":"time_added","hash":{},"data":data}) : helper)))
+    + "\n		</td>\n		<td>"
+    + alias3(((helper = (helper = helpers.vm_name || (depth0 != null ? depth0.vm_name : depth0)) != null ? helper : alias1),(typeof helper === alias2 ? helper.call(depth0,{"name":"vm_name","hash":{},"data":data}) : helper)))
+    + "</td>\n		<td>"
+    + alias3(((helper = (helper = helpers.os || (depth0 != null ? depth0.os : depth0)) != null ? helper : alias1),(typeof helper === alias2 ? helper.call(depth0,{"name":"os","hash":{},"data":data}) : helper)))
+    + " "
+    + alias3(((helper = (helper = helpers.os_version || (depth0 != null ? depth0.os_version : depth0)) != null ? helper : alias1),(typeof helper === alias2 ? helper.call(depth0,{"name":"os_version","hash":{},"data":data}) : helper)))
+    + "</td>\n		<td>"
+    + alias3(((helper = (helper = helpers.os_arch || (depth0 != null ? depth0.os_arch : depth0)) != null ? helper : alias1),(typeof helper === alias2 ? helper.call(depth0,{"name":"os_arch","hash":{},"data":data}) : helper)))
+    + "</td>\n		<td>"
+    + alias3(((helper = (helper = helpers.vm_file || (depth0 != null ? depth0.vm_file : depth0)) != null ? helper : alias1),(typeof helper === alias2 ? helper.call(depth0,{"name":"vm_file","hash":{},"data":data}) : helper)))
+    + "</td>\n		<td>"
+    + alias3(((helper = (helper = helpers.cpu || (depth0 != null ? depth0.cpu : depth0)) != null ? helper : alias1),(typeof helper === alias2 ? helper.call(depth0,{"name":"cpu","hash":{},"data":data}) : helper)))
+    + "</td>\n		<td>"
+    + alias3(((helper = (helper = helpers.ram || (depth0 != null ? depth0.ram : depth0)) != null ? helper : alias1),(typeof helper === alias2 ? helper.call(depth0,{"name":"ram","hash":{},"data":data}) : helper)))
+    + "</td>\n		<td class=\"postsubmit-status-display\">\n			<div>\n				<div><span class=\"status status-"
+    + alias3(((helper = (helper = helpers.status || (depth0 != null ? depth0.status : depth0)) != null ? helper : alias1),(typeof helper === alias2 ? helper.call(depth0,{"name":"status","hash":{},"data":data}) : helper)))
+    + "\"></span> "
+    + alias3(((helper = (helper = helpers.status || (depth0 != null ? depth0.status : depth0)) != null ? helper : alias1),(typeof helper === alias2 ? helper.call(depth0,{"name":"status","hash":{},"data":data}) : helper)))
+    + "</div>\n			</div>\n		</td>\n	</tr>\n";
+},"2":function(depth0,helpers,partials,data) {
+    return "finished";
+},"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+    var stack1;
+
+  return ((stack1 = helpers.each.call(depth0,(depth0 != null ? depth0.tasks : depth0),{"name":"each","hash":{},"fn":this.program(1, data, 0),"inverse":this.noop,"data":data})) != null ? stack1 : "");
 },"useData":true});
 this["HANDLEBARS_TEMPLATES"]["packet-display"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
     var helper, alias1=helpers.helperMissing, alias2="function", alias3=this.escapeExpression;

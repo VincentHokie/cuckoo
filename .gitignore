@@ -38,3 +38,6 @@ bower_components/
 .sass-cache/
 cuckoo/web/src/package-lock.json
 *.map
+
+# files required for running cuckoo in dev mode
+cuckoo/data/monitor/
